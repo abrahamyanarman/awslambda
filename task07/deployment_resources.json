@@ -14,8 +14,7 @@
             "dynamodb:DeleteItem",
             "ssm:PutParameter",
             "ssm:GetParameter",
-            "kms:Decrypt",
-            "s3:PutObject"
+            "kms:Decrypt"
           ],
           "Effect": "Allow",
           "Resource": "*"
@@ -30,7 +29,19 @@
     "acl": "private",
     "location": "eu-central-1",
     "cors": [],
-    "policy": {},
+    "policy": {
+      "Version": "2008-10-17",
+      "Id": "AllowS3Only",
+      "Statement": [
+        {
+          "Action": "s3:PutObject",
+          "Principal": "*",
+          "Resource": "arn:aws:s3:::uuid-storage/*",
+          "Effect": "Allow",
+          "Sid": "1"
+        }
+      ]
+    },
     "public_access_block": {
       "block_public_acls": true,
       "ignore_public_acls": true,
