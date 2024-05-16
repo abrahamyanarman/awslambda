@@ -21,7 +21,8 @@ import java.util.logging.Logger;
 @LambdaHandler(lambdaName = "uuid_generator",
 	roleName = "uuid_generator-role",
 	isPublishVersion = false,
-	logsExpiration = RetentionSetting.SYNDICATE_ALIASES_SPECIFIED
+	logsExpiration = RetentionSetting.SYNDICATE_ALIASES_SPECIFIED,
+	timeout = 60
 )
 @EventBridgeRuleSource(targetRule = "uuid_trigger")
 public class UuidGenerator implements RequestHandler<Object, Void> {
