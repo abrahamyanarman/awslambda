@@ -29,19 +29,7 @@
     "acl": "private",
     "location": "eu-central-1",
     "cors": [],
-    "policy": {
-      "Version": "2008-10-17",
-      "Id": "AllowS3Only",
-      "Statement": [
-        {
-          "Action": "s3:PutObject",
-          "Principal": "*",
-          "Resource": "arn:aws:s3:::uuid-storage/*",
-          "Effect": "Allow",
-          "Sid": "1"
-        }
-      ]
-    },
+    "policy": {},
     "public_access_block": {
       "block_public_acls": true,
       "ignore_public_acls": true,
