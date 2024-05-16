@@ -4,6 +4,7 @@
       "Statement": [
         {
           "Action": [
+            "s3:PutObject",
             "logs:CreateLogGroup",
             "logs:CreateLogStream",
             "logs:PutLogEvents",
