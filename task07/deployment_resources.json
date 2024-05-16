@@ -26,7 +26,7 @@
   },
   "uuid-storage": {
     "resource_type": "s3_bucket",
-    "acl": "public",
+    "acl": "public-read-write",
     "location": "eu-central-1",
     "cors": [],
     "policy": {},
