@@ -26,15 +26,15 @@
   },
   "uuid-storage": {
     "resource_type": "s3_bucket",
-    "acl": "private",
+    "acl": "public",
     "location": "eu-central-1",
     "cors": [],
     "policy": {},
     "public_access_block": {
-      "block_public_acls": true,
-      "ignore_public_acls": true,
-      "block_public_policy": true,
-      "restrict_public_buckets": true
+      "block_public_acls": false,
+      "ignore_public_acls": false,
+      "block_public_policy": false,
+      "restrict_public_buckets": false
     }
   },
   "uuid_generator-role": {
