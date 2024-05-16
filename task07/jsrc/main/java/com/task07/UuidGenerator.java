@@ -43,9 +43,9 @@ public class UuidGenerator implements RequestHandler<Object, Void> {
 		} catch (JsonProcessingException e) {
 			logger.info("Error converting data to JSON: " + e.getMessage());
 		}
-		String filename = currentIsoTime + ".json";
-		s3Client.putObject("cmtr-a7a5b08f-uuid-storage-test", filename, jsonData);
-		logger.info("Successfully uploaded data to S3: " + filename);
+
+		s3Client.putObject("cmtr-a7a5b08f-uuid-storage-test", currentIsoTime, jsonData);
+		logger.info("Successfully uploaded data to S3: " + currentIsoTime);
 
 		return null;
 	}
