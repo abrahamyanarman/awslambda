@@ -41,7 +41,20 @@
     "predefined_policies": [],
     "principal_service": "lambda",
     "custom_policies": [
-      "lambda-basic-execution"
+      "lambda-basic-execution",
+      {
+        "PolicyName": "S3AccessPolicy",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": "s3:PutObject",
+              "Resource": "arn:aws:s3:::uuid-storage/*"
+            }
+          ]
+        }
+      }
     ],
     "resource_type": "iam_role"
   },
