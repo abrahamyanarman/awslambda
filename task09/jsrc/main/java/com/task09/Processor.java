@@ -21,8 +21,7 @@ import java.util.logging.Logger;
 
 @LambdaHandler(lambdaName = "processor",
 	roleName = "processor-role",
-	isPublishVersion = true,
-	aliasName = "${lambdas_alias_name}",
+	isPublishVersion = false,
 	logsExpiration = RetentionSetting.SYNDICATE_ALIASES_SPECIFIED,
 	tracingMode = TracingMode.Active
 )
