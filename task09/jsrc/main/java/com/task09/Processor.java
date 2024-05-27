@@ -28,7 +28,6 @@ import java.util.logging.Logger;
 @LambdaUrlConfig
 public class Processor implements RequestHandler<Object, Map<String, Object>> {
 	private static final Logger logger = Logger.getLogger(Processor.class.getName());
-	private static final String INSERT_EVENT = "INSERT";
 	private static final String TABLE_NAME = "cmtr-a7a5b08f-Weather-test";
 	private final static double LATITUDE = 50.4375;
 	private final static double LONGITUDE = 30.5;
@@ -43,7 +42,7 @@ public class Processor implements RequestHandler<Object, Map<String, Object>> {
 
 			Table table = dynamoDB.getTable(TABLE_NAME);
 			Item item = new Item().withPrimaryKey("id", UUID.randomUUID().toString())
-							.with("forecast", weatherData);
+							.withString("forecast", weatherData.toString());
 			table.putItem(item);
 
 			response.put("statusCode", 200);
