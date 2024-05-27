@@ -21,7 +21,7 @@ public class OpenMeteoAPILightweightSDK {
     }
 
     public JSONObject getWeatherForecast() throws IOException, InterruptedException {
-        var url = String.format("%s?latitude=%.4f&longitude=%.4f&hourly=temperature_2m", BASE_URL, latitude, longitude);
+        var url = String.format("%s?latitude=%.4f&longitude=%.4f&hourly=temperature_2m&timezone=Europe/Kiev", BASE_URL, latitude, longitude);
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .build();
