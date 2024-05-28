@@ -1,13 +1,5 @@
 package com.task10;
 
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
-import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
-import com.amazonaws.services.cognitoidp.model.AdminCreateUserRequest;
-import com.amazonaws.services.cognitoidp.model.AttributeType;
-import com.amazonaws.services.cognitoidp.model.AuthFlowType;
-import com.amazonaws.services.cognitoidp.model.GetUserRequest;
-import com.amazonaws.services.cognitoidp.model.InitiateAuthRequest;
-import com.amazonaws.services.cognitoidp.model.InitiateAuthResult;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
@@ -26,6 +18,19 @@ import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 import com.syndicate.deployment.model.RetentionSetting;
 import com.task10.model.Reservation;
 import com.task10.model.Tables;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminCreateUserRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeType;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthFlowType;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolClientsRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolClientsResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolsRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolsResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolClientDescription;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolDescriptionType;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +46,7 @@ import java.util.regex.Pattern;
 )
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 	private static final String USER_POOL_ID = "cmtr-a7a5b08f-simple-booking-userpool-test";
-	private static final String CLIENT_ID = "cmtr-a7a5b08f-task10-client";
+	private static final String CLIENT_NAME = "cmtr-a7a5b08f-task10-client";
 
 	private static final String SIGN_UP_PATH = "/signup";
 	private static final String SIGN_IN_PATH = "/signin";
@@ -57,7 +62,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	private final DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
 	private final Table tablesTable = dynamoDB.getTable("Tables");
 	private final Table reservationsTable = dynamoDB.getTable("Reservations");
-	private final AWSCognitoIdentityProvider cognitoClient = AWSCognitoIdentityProviderClientBuilder.defaultClient();
+	private final CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.builder().region(Region.EU_CENTRAL_1).build();
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
@@ -103,17 +108,27 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			return createErrorResponse(400, "Invalid request");
 		}
 
-		AdminCreateUserRequest createUserRequest = new AdminCreateUserRequest()
-				.withUserPoolId(USER_POOL_ID)
-				.withUsername(requestBody.get("email"))
-				.withUserAttributes(
-						new AttributeType().withName("email").withValue(requestBody.get("email")),
-						new AttributeType().withName("email_verified").withValue("true"),
-						new AttributeType().withName("given_name").withValue(requestBody.get("firstName")),
-						new AttributeType().withName("family_name").withValue(requestBody.get("lastName"))
+		ListUserPoolsRequest listUserPoolsRequest = ListUserPoolsRequest.builder().build();
+		ListUserPoolsResponse listUserPoolsResponse = cognitoClient.listUserPools(listUserPoolsRequest);
+		List<UserPoolDescriptionType> userPools = listUserPoolsResponse.userPools();
+
+		String userPoolId =  userPools.stream()
+				.filter(userPool -> userPool.name().equals(USER_POOL_ID))
+				.map(UserPoolDescriptionType::id)
+				.findFirst().get();
+
+		AdminCreateUserRequest createUserRequest = AdminCreateUserRequest.builder()
+				.userPoolId(userPoolId)
+				.username(requestBody.get("email"))
+				.userAttributes(
+						AttributeType.builder().name("email").value(requestBody.get("email")).build(),
+						AttributeType.builder().name("email_verified").value("true").build(),
+						AttributeType.builder().name("given_name").value(requestBody.get("firstName")).build(),
+						AttributeType.builder().name("family_name").value(requestBody.get("lastName")).build()
 				)
-				.withTemporaryPassword(requestBody.get("password"))
-				.withMessageAction("SUPPRESS");
+				.temporaryPassword(requestBody.get("password"))
+				.messageAction("SUPPRESS")
+				.build();
 
 		cognitoClient.adminCreateUser(createUserRequest);
 
@@ -147,16 +162,38 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			return createErrorResponse(400, "Invalid request");
 		}
 
-		InitiateAuthRequest authRequest = new InitiateAuthRequest()
-				.withAuthFlow(AuthFlowType.USER_PASSWORD_AUTH)
-				.withClientId(CLIENT_ID)
-				.withAuthParameters(Map.of(
+		ListUserPoolsRequest listUserPoolsRequest = ListUserPoolsRequest.builder().build();
+		ListUserPoolsResponse listUserPoolsResponse = cognitoClient.listUserPools(listUserPoolsRequest);
+		List<UserPoolDescriptionType> userPools = listUserPoolsResponse.userPools();
+
+		String userPoolId =  userPools.stream()
+				.filter(userPool -> userPool.name().equals(USER_POOL_ID))
+				.map(UserPoolDescriptionType::id)
+				.findFirst().get();
+
+		ListUserPoolClientsRequest listUserPoolsClientRequest = ListUserPoolClientsRequest.builder()
+				.userPoolId(userPoolId)
+				.build();
+
+		ListUserPoolClientsResponse response = cognitoClient.listUserPoolClients(listUserPoolsClientRequest);
+		List<UserPoolClientDescription> clients = response.userPoolClients();
+
+		String clientId =  clients.stream()
+				.filter(userPoolClient -> userPoolClient.clientName().equals(CLIENT_NAME))
+				.map(UserPoolClientDescription::clientId)
+				.findFirst().get();
+
+		AdminInitiateAuthRequest authRequest = AdminInitiateAuthRequest.builder()
+				.authFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
+				.clientId(clientId)
+				.userPoolId(userPoolId)
+				.authParameters(Map.of(
 						"USERNAME", requestBody.get("email"),
 						"PASSWORD", requestBody.get("password")
-				));
+				)).build();
 
-		InitiateAuthResult authResult = cognitoClient.initiateAuth(authRequest);
-		String idToken = authResult.getAuthenticationResult().getIdToken();
+		AdminInitiateAuthResponse authResult = cognitoClient.adminInitiateAuth(authRequest);
+		String idToken = authResult.authenticationResult().idToken();
 
 		Map<String, String> responseBody = Map.of("accessToken", idToken);
 		return createSuccessResponse(objectMapper.writeValueAsString(responseBody));
@@ -166,9 +203,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		return requestBody.containsKey("email") && requestBody.containsKey("password");
 	}
 	private APIGatewayProxyResponseEvent handleGetTables(Map<String, String> headers) {
-		if (isNotAuthorized(headers)) {
-			return createErrorResponse(403, "Unauthorized");
-		}
 
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName("Tables"));
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
@@ -178,9 +212,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleCreateTable(Map<String, String> headers, String body) throws Exception {
-		if (isNotAuthorized(headers)) {
-			return createErrorResponse(403, "Unauthorized");
-		}
 
 		Tables table = objectMapper.readValue(body, Tables.class);
 		if (!isValidTable(table)) {
@@ -202,9 +233,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleGetTable(Map<String, String> headers, int tableId) {
-		if (isNotAuthorized(headers)) {
-			return createErrorResponse(403, "Unauthorized");
-		}
 
 		GetItemSpec spec = new GetItemSpec().withPrimaryKey("id", tableId);
 		Item item = tablesTable.getItem(spec);
@@ -223,9 +251,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleCreateReservation(Map<String, String> headers, String body) throws Exception {
-		if (isNotAuthorized(headers)) {
-			return createErrorResponse(403, "Unauthorized");
-		}
 
 		Reservation reservation = objectMapper.readValue(body, Reservation.class);
 		if (!isValidReservation(reservation)) {
@@ -255,30 +280,12 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleGetReservations(Map<String, String> headers) {
-		if (isNotAuthorized(headers)) {
-			return createErrorResponse(403, "Unauthorized");
-		}
 
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName("Reservations"));
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
 
 		Map<String, List<Map<String, AttributeValue>>> responseBody = Map.of("reservations", items);
 		return createSuccessResponse(serialize(responseBody));
-	}
-
-	private boolean isNotAuthorized(Map<String, String> headers) {
-		if (!headers.containsKey("Authorization")) {
-			return true;
-		}
-
-		String token = headers.get("Authorization").split(" ")[1];
-		try {
-			GetUserRequest getUserRequest = new GetUserRequest().withAccessToken(token);
-			cognitoClient.getUser(getUserRequest);
-			return false;
-		} catch (Exception e) {
-			return true;
-		}
 	}
 
 	private APIGatewayProxyResponseEvent createSuccessResponse(String body) {
