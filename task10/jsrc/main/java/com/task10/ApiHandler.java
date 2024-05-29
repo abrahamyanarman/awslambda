@@ -274,7 +274,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		table.setId(item.getInt("id"));
 		table.setNumber(item.getInt("number"));
 		table.setPlaces(item.getInt("places"));
-		table.setVip(item.getBoolean("isVip"));
+		table.setIsVip(item.getBoolean("isVip"));
 		table.setMinOrder(item.isPresent("minOrder") ? item.getInt("minOrder") : null);
 
 		return createSuccessResponse(serialize(table));

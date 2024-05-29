@@ -35,7 +35,7 @@ public class Tables {
         return this.isVip;
     }
 
-    public void setVip(boolean isVip) {
+    public void setIsVip(boolean isVip) {
         this.isVip = isVip;
     }
 
