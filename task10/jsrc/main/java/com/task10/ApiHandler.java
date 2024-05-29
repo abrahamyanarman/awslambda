@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoo
 import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolClientsResponse;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolsRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolsResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.UserNotFoundException;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolClientDescription;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolDescriptionType;
 
@@ -101,7 +102,11 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				response.setStatusCode(400);
 				response.setBody("{\"message\":\"Bad Request\"}");
 			}
-		} catch (Exception e) {
+		} catch (UserNotFoundException unfe) {
+			logger.warning("User Not Found!");
+			response.setStatusCode(400);
+			response.setBody(String.format("{\"message\":\"%s\"}", unfe.getMessage()));
+		}catch (Exception e) {
 			logger.log(Level.SEVERE, "Internal Server Error message: " + e.getMessage() + "stackTrace: " + Arrays.toString(e.getStackTrace()));
 			response.setStatusCode(500);
 			response.setBody("{\"message\":\"Internal Server Error\"}");
@@ -172,7 +177,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private boolean isValidPassword(String password) {
-		String passwordRegex = "^[\\w$%^*-_.]+$";
+		String passwordRegex = "^[a-zA-Z][\\w$%^*-_.]*$";
 		Pattern pattern = Pattern.compile(passwordRegex);
 		Matcher matcher = pattern.matcher(password);
 		return matcher.matches();

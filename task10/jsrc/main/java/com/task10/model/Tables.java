@@ -8,7 +8,7 @@ public class Tables {
     private Integer minOrder;
 
     public int getId() {
-        return id;
+        return this.id;
     }
 
     public void setId(int id) {
@@ -16,7 +16,7 @@ public class Tables {
     }
 
     public int getNumber() {
-        return number;
+        return this.number;
     }
 
     public void setNumber(int number) {
@@ -24,7 +24,7 @@ public class Tables {
     }
 
     public int getPlaces() {
-        return places;
+        return this.places;
     }
 
     public void setPlaces(int places) {
@@ -32,15 +32,15 @@ public class Tables {
     }
 
     public boolean isVip() {
-        return isVip;
+        return this.isVip;
     }
 
-    public void setVip(boolean vip) {
-        isVip = vip;
+    public void setVip(boolean isVip) {
+        this.isVip = isVip;
     }
 
     public Integer getMinOrder() {
-        return minOrder;
+        return this.minOrder;
     }
 
     public void setMinOrder(Integer minOrder) {
