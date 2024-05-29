@@ -319,20 +319,20 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleCreateReservation(String body) throws Exception {
 
+		logger.info("Start handleCreateReservation");
 		Reservation reservation = objectMapper.readValue(body, Reservation.class);
 		if (!isValidReservation(reservation)) {
 			return createErrorResponse(400, "Invalid request");
 		}
 
-		Map<String, AttributeValue> tableKey = new HashMap<>();
-		tableKey.put("id", new AttributeValue().withN(String.valueOf(reservation.getTableNumber())));
-
-		GetItemRequest getItemRequest = new GetItemRequest()
-				.withTableName(tablesTable.getTableName())
-				.withKey(tableKey);
-
-		GetItemResult getItemResult = dynamoDBClient.getItem(getItemRequest);
-		if (getItemResult.getItem() == null) {
+		ScanResult scanResultForTablesTable = dynamoDBClient.scan(new ScanRequest().withTableName(tablesTable.getTableName()));
+		List<Map<String, AttributeValue>> items = scanResultForTablesTable.getItems();
+		List<Map<String, Object>> tables = new ArrayList<>();
+		for (Map<String, AttributeValue> item : items) {
+			tables.add(convertDynamoDBItemToMap(item));
+		}
+		boolean tablePresent = tables.stream().anyMatch(t -> ((Integer)t.get("number")).equals(reservation.getTableNumber()));
+		if (!tablePresent) {
 			return createErrorResponse(400, "Table does not exist.");
 		}
 
