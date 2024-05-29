@@ -32,10 +32,14 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoo
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolClientDescription;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolDescriptionType;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,6 +49,7 @@ import java.util.regex.Pattern;
 	logsExpiration = RetentionSetting.SYNDICATE_ALIASES_SPECIFIED
 )
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+	private static final Logger logger = Logger.getLogger(ApiHandler.class.getName());
 	private static final String USER_POOL_ID = "cmtr-a7a5b08f-simple-booking-userpool-test";
 	private static final String CLIENT_NAME = "cmtr-a7a5b08f-task10-client";
 
@@ -62,7 +67,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	private final DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
 	private final Table tablesTable = dynamoDB.getTable("Tables");
 	private final Table reservationsTable = dynamoDB.getTable("Reservations");
-	private final CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.builder().region(Region.EU_CENTRAL_1).build();
+	private final CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
@@ -75,11 +80,12 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		try {
 			if (SIGN_UP_PATH.equals(path) && POST.equalsIgnoreCase(httpMethod)) {
+				logger.info("Start handling Signup request with body: " + body);
 				return handleSignup(body);
 			} else if (SIGN_IN_PATH.equals(path) && POST.equalsIgnoreCase(httpMethod)) {
 				return handleSignin(body);
 			} else if (TABLES_PATH.equals(path) && GET.equalsIgnoreCase(httpMethod)) {
-				return handleGetTables(headers);
+				return handleGetTables();
 			} else if (TABLES_PATH.equals(path) && POST.equalsIgnoreCase(httpMethod)) {
 				return handleCreateTable(headers, body);
 			} else if (path.startsWith(START_WITH_TABLES_PATH) && GET.equalsIgnoreCase(httpMethod)) {
@@ -94,6 +100,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				response.setBody("{\"message\":\"Bad Request\"}");
 			}
 		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Internal Server Error message: " + e.getMessage() + "stackTrace: " + Arrays.toString(e.getStackTrace()));
 			response.setStatusCode(500);
 			response.setBody("{\"message\":\"Internal Server Error\"}");
 		}
@@ -103,8 +110,10 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleSignup(String body) throws Exception {
-		Map<String, String> requestBody = objectMapper.readValue(body, Map.class);
+		Map<String, String> requestBody = objectMapper.readValue(body, HashMap.class);
+		logger.info("Signup request body: " + requestBody);
 		if (!isValidSignupRequest(requestBody)) {
+			logger.log(Level.WARNING, "Request body not valid for Signup");
 			return createErrorResponse(400, "Invalid request");
 		}
 
@@ -112,10 +121,11 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		ListUserPoolsResponse listUserPoolsResponse = cognitoClient.listUserPools(listUserPoolsRequest);
 		List<UserPoolDescriptionType> userPools = listUserPoolsResponse.userPools();
 
+		logger.info("SignUp, userPools: " + userPools);
 		String userPoolId =  userPools.stream()
 				.filter(userPool -> userPool.name().equals(USER_POOL_ID))
 				.map(UserPoolDescriptionType::id)
-				.findFirst().get();
+				.findFirst().orElseThrow();
 
 		AdminCreateUserRequest createUserRequest = AdminCreateUserRequest.builder()
 				.userPoolId(userPoolId)
@@ -130,6 +140,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				.messageAction("SUPPRESS")
 				.build();
 
+		logger.info("Calling adminCreateUser: " + createUserRequest);
 		cognitoClient.adminCreateUser(createUserRequest);
 
 		return createSuccessResponse("{\"message\":\"Sign-up successful\"}");
@@ -157,7 +168,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleSignin(String body) throws Exception {
-		Map<String, String> requestBody = objectMapper.readValue(body, Map.class);
+		Map<String, String> requestBody = objectMapper.readValue(body, HashMap.class);
+		logger.info("Signin request body: " + requestBody);
 		if (!isValidSigninRequest(requestBody)) {
 			return createErrorResponse(400, "Invalid request");
 		}
@@ -169,7 +181,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String userPoolId =  userPools.stream()
 				.filter(userPool -> userPool.name().equals(USER_POOL_ID))
 				.map(UserPoolDescriptionType::id)
-				.findFirst().get();
+				.findFirst().orElseThrow();
 
 		ListUserPoolClientsRequest listUserPoolsClientRequest = ListUserPoolClientsRequest.builder()
 				.userPoolId(userPoolId)
@@ -181,7 +193,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String clientId =  clients.stream()
 				.filter(userPoolClient -> userPoolClient.clientName().equals(CLIENT_NAME))
 				.map(UserPoolClientDescription::clientId)
-				.findFirst().get();
+				.findFirst().orElseThrow();
 
 		AdminInitiateAuthRequest authRequest = AdminInitiateAuthRequest.builder()
 				.authFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
@@ -192,6 +204,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 						"PASSWORD", requestBody.get("password")
 				)).build();
 
+		logger.info("Calling adminInitiateAuth: " + authRequest);
 		AdminInitiateAuthResponse authResult = cognitoClient.adminInitiateAuth(authRequest);
 		String idToken = authResult.authenticationResult().idToken();
 
@@ -202,7 +215,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	private boolean isValidSigninRequest(Map<String, String> requestBody) {
 		return requestBody.containsKey("email") && requestBody.containsKey("password");
 	}
-	private APIGatewayProxyResponseEvent handleGetTables(Map<String, String> headers) {
+	private APIGatewayProxyResponseEvent handleGetTables() {
 
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName("Tables"));
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
