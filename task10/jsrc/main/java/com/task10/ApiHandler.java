@@ -7,6 +7,8 @@ import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.amazonaws.services.lambda.runtime.Context;
@@ -290,6 +292,38 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			return createErrorResponse(400, "Invalid request");
 		}
 
+		Map<String, AttributeValue> tableKey = new HashMap<>();
+		tableKey.put("id", new AttributeValue().withN(String.valueOf(reservation.getTableNumber())));
+
+		GetItemRequest getItemRequest = new GetItemRequest()
+				.withTableName("Tables")
+				.withKey(tableKey);
+
+		GetItemResult getItemResult = dynamoDBClient.getItem(getItemRequest);
+		if (getItemResult.getItem() == null) {
+			return createErrorResponse(400, "Table does not exist.");
+		}
+
+		Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+		expressionAttributeValues.put(":tableNumber", new AttributeValue().withN(String.valueOf(reservation.getTableNumber())));
+		expressionAttributeValues.put(":date", new AttributeValue().withS(reservation.getDate()));
+
+		ScanRequest scanRequest = new ScanRequest()
+				.withTableName(reservationsTable.getTableName())
+				.withFilterExpression("tableNumber = :tableNumber AND #date = :date")
+				.withExpressionAttributeNames(Collections.singletonMap("#date", "date"))
+				.withExpressionAttributeValues(expressionAttributeValues);
+
+		ScanResult scanResult = dynamoDBClient.scan(scanRequest);
+		for (Map<String, AttributeValue> item : scanResult.getItems()) {
+			String existingSlotTimeStart = item.get("slotTimeStart").getS();
+			String existingSlotTimeEnd = item.get("slotTimeEnd").getS();
+
+			if (isTimeSlotOverlap(reservation.getSlotTimeStart(), reservation.getSlotTimeEnd(), existingSlotTimeStart, existingSlotTimeEnd)) {
+				return createErrorResponse(400, "Reservation time slot overlaps with an existing reservation.");
+			}
+		}
+
 		reservation.setId(UUID.randomUUID().toString());
 		reservationsTable.putItem(new Item()
 				.withPrimaryKey("id", reservation.getId())
@@ -303,6 +337,11 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		Map<String, String> responseBody = Map.of("reservationId", reservation.getId());
 		return createSuccessResponse(serialize(responseBody));
 	}
+
+	private boolean isTimeSlotOverlap(String newStart, String newEnd, String existingStart, String existingEnd) {
+		return (newStart.compareTo(existingEnd) < 0 && newEnd.compareTo(existingStart) > 0);
+	}
+
 	private boolean isValidReservation(Reservation reservation) {
 		return reservation.getTableNumber() != 0 &&
 				reservation.getClientName() != null &&
@@ -313,11 +352,16 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private APIGatewayProxyResponseEvent handleGetReservations() {
+		logger.info("Start handleGetReservations!");
 
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName(reservationsTable.getTableName()));
+		logger.info("HandleGetReservations ScanResult: " + scanResult);
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
+		logger.info("HandleGetReservations items: " + items);
 
 		Map<String, List<Map<String, AttributeValue>>> responseBody = Map.of("reservations", items);
+		logger.info("HandleGetReservations responseBody: " + responseBody);
+		logger.info("End handleGetReservations!");
 		return createSuccessResponse(serialize(responseBody));
 	}
 
