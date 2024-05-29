@@ -241,6 +241,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		Map<String, List<Map<String, AttributeValue>>> responseBody = Map.of("tables", items);
 		logger.info("HandleGetTables responseBody: " + responseBody);
+		logger.info("HandleGetTables responseBody with serialize: " + serialize(responseBody));
 		logger.info("End handleGetTables!");
 		return createSuccessResponse(serialize(responseBody));
 	}
@@ -296,7 +297,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		tableKey.put("id", new AttributeValue().withN(String.valueOf(reservation.getTableNumber())));
 
 		GetItemRequest getItemRequest = new GetItemRequest()
-				.withTableName("Tables")
+				.withTableName(tablesTable.getTableName())
 				.withKey(tableKey);
 
 		GetItemResult getItemResult = dynamoDBClient.getItem(getItemRequest);
