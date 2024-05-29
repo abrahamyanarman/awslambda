@@ -2,11 +2,11 @@
   "openapi": "3.0.1",
   "info": {
     "title": "task11_api",
-    "version": "2024-05-29T15:04:08Z"
+    "version": "2024-05-16T21:03:17Z"
   },
   "servers": [
     {
-      "url": "https://cxx1p1vpz0.execute-api.eu-central-1.amazonaws.com/{basePath}",
+      "url": "https://b93g28742g.execute-api.eu-central-1.amazonaws.com/{basePath}",
       "variables": {
         "basePath": {
           "default": "api"
@@ -19,15 +19,6 @@
       "get": {
         "description": "List reservations",
         "summary": "List all available reservations",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Empty"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "200 response",
@@ -41,7 +32,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservationListResponseSchema"
+                  "$ref": "#/components/schemas/ReservationList"
                 }
               }
             }
@@ -55,7 +46,7 @@
         },
         "security": [
           {
-            "cognito-authorizer": []
+            "authorizer": []
           }
         ],
         "x-amazon-apigateway-integration": {
@@ -77,10 +68,11 @@
         "description": "Save new reservation",
         "summary": "Save new reservation if slot is available",
         "requestBody": {
+          "description": "Save new reservation",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateReservationSchema"
+                "$ref": "#/components/schemas/Reservation"
               }
             }
           }
@@ -98,21 +90,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateReservationResponseSchema"
+                  "$ref": "#/components/schemas/ReservationId"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
-        },
-        "400": {
-          "description": "Invalid request"
-        },
-        "500": {
-          "description": "Internal Server Error"
         },
         "security": [
           {
-            "cognito-authorizer": []
+            "authorizer": []
           }
         ],
         "x-amazon-apigateway-integration": {
@@ -131,8 +123,8 @@
         }
       },
       "options": {
-        "description": "Returns options for reservations",
-        "summary": "Reservations options",
+        "description": "Check path",
+        "summary": "Check path for availability",
         "responses": {
           "200": {
             "description": "200 response",
@@ -185,15 +177,6 @@
       "get": {
         "description": "List tables",
         "summary": "List all available tables",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Empty"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "200 response",
@@ -207,21 +190,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TableListResponseSchema"
+                  "$ref": "#/components/schemas/TableList"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
-        },
-        "400": {
-          "description": "Invalid request"
-        },
-        "500": {
-          "description": "Internal Server Error"
         },
         "security": [
           {
-            "cognito-authorizer": []
+            "authorizer": []
           }
         ],
         "x-amazon-apigateway-integration": {
@@ -241,12 +224,13 @@
       },
       "post": {
         "description": "Save new table",
-        "summary": "Save new table",
+        "summary": "Save new table with defined fields",
         "requestBody": {
+          "description": "Create new table",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SingleTableSchema"
+                "$ref": "#/components/schemas/Table"
               }
             }
           }
@@ -264,21 +248,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateTableResponseSchema"
+                  "$ref": "#/components/schemas/TableId"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
-        },
-        "400": {
-          "description": "Invalid request"
-        },
-        "500": {
-          "description": "Internal Server Error"
         },
         "security": [
           {
-            "cognito-authorizer": []
+            "authorizer": []
           }
         ],
         "x-amazon-apigateway-integration": {
@@ -297,8 +281,8 @@
         }
       },
       "options": {
-        "description": "Returns options for table",
-        "summary": "Table options",
+        "description": "Check path",
+        "summary": "Check path for availability",
         "responses": {
           "200": {
             "description": "200 response",
@@ -352,10 +336,11 @@
         "description": "Sign in User",
         "summary": "Sign in User using email and password",
         "requestBody": {
+          "description": "Sign in for existing User",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SignInRequestSchema"
+                "$ref": "#/components/schemas/SignIn"
               }
             }
           }
@@ -373,16 +358,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SignInResponseSchema"
+                  "$ref": "#/components/schemas/AccessToken"
                 }
               }
             }
           },
           "400": {
             "description": "Invalid request"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         },
         "x-amazon-apigateway-integration": {
@@ -401,8 +383,8 @@
         }
       },
       "options": {
-        "description": "Returns options for signIn",
-        "summary": "SignIn options",
+        "description": "Check path",
+        "summary": "Check path for availability",
         "responses": {
           "200": {
             "description": "200 response",
@@ -454,12 +436,13 @@
     "/signup": {
       "post": {
         "description": "Sign up User",
-        "summary": "Sign up User",
+        "summary": "Sign up new User with additional info",
         "requestBody": {
+          "description": "Sign up for new User",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SignUpRequestSchema"
+                "$ref": "#/components/schemas/SignUp"
               }
             }
           }
@@ -473,20 +456,10 @@
                   "type": "string"
                 }
               }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SignUpResponseSchema"
-                }
-              }
             }
           },
           "400": {
             "description": "Invalid request"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         },
         "x-amazon-apigateway-integration": {
@@ -505,8 +478,8 @@
         }
       },
       "options": {
-        "description": "Returns options for signUp",
-        "summary": "SignUp options",
+        "description": "Check path",
+        "summary": "Check path for availability",
         "responses": {
           "200": {
             "description": "200 response",
@@ -555,13 +528,13 @@
         }
       }
     },
-    "/tables/{tableid}": {
+    "/tables/{tableId}": {
       "get": {
         "description": "Get table info",
-        "summary": "Get all information by id",
+        "summary": "Get all information about specific table",
         "parameters": [
           {
-            "name": "tableid",
+            "name": "tableId",
             "in": "path",
             "required": true,
             "schema": {
@@ -582,7 +555,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SingleTableSchema"
+                  "$ref": "#/components/schemas/Table"
                 }
               }
             }
@@ -596,7 +569,7 @@
         },
         "security": [
           {
-            "cognito-authorizer": []
+            "authorizer": []
           }
         ],
         "x-amazon-apigateway-integration": {
@@ -615,11 +588,11 @@
         }
       },
       "options": {
-        "description": "Returns options for /tables/{tableid}",
-        "summary": "/tables/{tableid} options",
+        "description": "Check path",
+        "summary": "Check path for availability",
         "parameters": [
           {
-            "name": "tableid",
+            "name": "tableId",
             "in": "path",
             "required": true,
             "schema": {
@@ -682,8 +655,8 @@
         "title": "Empty Schema",
         "type": "object"
       },
-      "NewTableResponseSchema": {
-        "description": "Table ID",
+      "TableId": {
+        "description": "A simple ID response",
         "type": "object",
         "properties": {
           "id": {
@@ -693,222 +666,164 @@
           }
         }
       },
-      "ListAllTablesSchema": {
+      "TableList": {
         "description": "List of Tables",
         "type": "object",
         "properties": {
           "tables": {
             "type": "array",
             "items": {
-              "tables": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "example": 55
-                  },
-                  "number": {
-                    "type": "integer",
-                    "example": 20
-                  },
-                  "places": {
-                    "type": "integer",
-                    "example": 15
-                  },
-                  "isVip": {
-                    "type": "boolean",
-                    "example": true
-                  },
-                  "minOrder": {
-                    "type": "integer",
-                    "example": 1
-                  }
-                }
-              }
+              "$ref": "#/components/schemas/Table"
             }
           }
         }
       },
-      "SignInResponseSchema": {
+      "Table": {
+        "description": "A simple table object",
         "type": "object",
-        "required": [
-          "accessToken"
-        ],
-        "properties": {
-          "accessToken": {
-            "type": "string"
-          }
-        }
-      },
-      "SignInRequestSchema": {
-        "title": "SignIn Schema",
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
-        "properties": {
-          "email": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string"
-          }
-        }
-      },
-      "SignUpRequestSchema": {
-        "title": "SignUp Schema",
-        "type": "object",
-        "required": [
-          "firstName",
-          "lastName",
-          "email",
-          "password"
-        ],
-        "properties": {
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string"
-          }
-        }
-      },
-      "SignUpResponseSchema": {
-        "type": "object",
-        "required": [
-          "message"
-        ],
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateReservationSchema": {
-        "title": "Reservation Scheme",
-        "type": "object",
-        "required": [
-          "tableNumber",
-          "clientName",
-          "phoneNumber",
-          "date",
-          "slotTimeStart",
-          "slotTimeEnd"
-        ],
-        "properties": {
-          "tableNumber": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 1
-          },
-          "clientName": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "date": {
-            "type": "string"
-          },
-          "slotTimeStart": {
-            "type": "string"
-          },
-          "slotTimeEnd": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateReservationResponseSchema": {
-        "title": "Reservation Created Scheme",
-        "type": "object",
-        "required": [
-          "reservationId"
-        ],
-        "properties": {
-          "reservationId": {
-            "type": "string"
-          }
-        }
-      },
-      "ReservationListResponseSchema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/components/schemas/CreateReservationSchema"
-        }
-      },
-      "SingleTableSchema": {
-        "title": "Single Table Schema",
-        "type": "object",
-        "required": [
-          "id",
-          "number",
-          "places",
-          "isVip"
-        ],
         "properties": {
           "id": {
             "type": "integer",
-            "format": "int32",
-            "minimum": 1
+            "example": 10,
+            "description": "Unique ID"
           },
           "number": {
             "type": "integer",
-            "format": "int32",
-            "minimum": 1
+            "example": 10,
+            "description": "number of the table"
           },
           "places": {
             "type": "integer",
-            "format": "int32",
-            "minimum": 1
+            "example": 10,
+            "description": "amount of people to sit at the table"
           },
           "isVip": {
-            "type": "boolean"
+            "type": "boolean",
+            "example": true,
+            "description": "is the table in the VIP hall"
           },
           "minOrder": {
             "type": "integer",
-            "format": "int32",
-            "minimum": 1
+            "example": 10,
+            "description": "table deposit required to book it"
           }
         }
       },
-      "CreateTableResponseSchema": {
-        "title": "Create Table Response Schema",
+      "SignUp": {
+        "description": "A simple Sign up object",
         "type": "object",
-        "required": [
-          "id"
-        ],
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
+          "firstName": {
+            "type": "string",
+            "example": "Jack",
+            "description": "First name"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Smith",
+            "description": "Last name"
+          },
+          "email": {
+            "type": "string",
+            "example": "jack@example.com",
+            "description": "Valid email"
+          },
+          "password": {
+            "type": "string",
+            "example": "twso-123_ASD*sfU",
+            "description": "Valid 12+ chars password"
           }
         }
       },
-      "TableListResponseSchema": {
-        "title": "List Tables schema",
+      "SignIn": {
+        "description": "A simple Sign in object",
         "type": "object",
-        "required": [
-          "tables"
-        ],
         "properties": {
-          "tables": {
+          "email": {
+            "type": "string",
+            "example": "jack@example.com",
+            "description": "Valid email"
+          },
+          "password": {
+            "type": "string",
+            "example": "twso-123_ASD*sfU",
+            "description": "Valid 12+ chars password"
+          }
+        }
+      },
+      "AccessToken": {
+        "description": "A simple Access token object",
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJraWQiOiJTc2J3V1RhNWZPR25aaXp3VUVhU0dEUEkwMnJuckxpTENUWTVVM2dXK0RNPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJiM2E0ODhlMi0zMGExLTcwMGYtNmQ4Yi1jZTIwZWE0YjMzZDkiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtY2VudHJhbC0xLmFtYXpvbmF3cy5jb21cL2V1LWNlbnRyYWwtMV9sa082aW12OE0iLCJjb2duaXRvOnVzZXJuYW1lIjoiYjNhNDg4ZTItMzBhMS03MDBmLTZkOGItY2UyMGVhNGIzM2Q5Iiwib3JpZ2luX2p0aSI6ImI5MjNkYWE0LTg3YzctNDU4NS05YTU2LTYxNjNlMjYyNWQzMSIsImF1ZCI6IjRla3ZqdDlrOW05cDB2cWh1Z2sxajE4a2pkIiwiZXZlbnRfaWQiOiIwMWY0ZGUwMi1lNzkzLTQyMGMtYjgwYy1iZjU2ODY1OTM4MTkiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTcxNTg4Nzg4NCwiZXhwIjoxNzE1ODkxNDg0LCJpYXQiOjE3MTU4ODc4ODQsImp0aSI6ImE1MDE0ODViLWQzOWQtNDdkZC1iNjhmLTRiMDc3YmUyZmU2MCIsImVtYWlsIjoia2VrQHRlay5jb20ifQ.uatjQF9tJXhr0UtOKAAbJjVbIdK2CrmNeeo1NEy22E9DwYMh7Gmszq_ikZm1cNuS8jwLBFbTZEWh2WY2HzeHVgRFLqF92k6rZG4Fe1dIkoyj0G8VQfHaR0cTmVQh84B5k8_tN2u0g7l9QchTX0zaT9FiexwNAphlUwpuE9-EWkP_VojRYtSlebiLsLh7wkb762fDOrRHOP3oUlSuscv5CtTCXry25WUF7XYfwIiyM4Qt2teVUDaUfBlW8bAZ8fk9B7wAEnlXz5zxBQnWNmxRFwo7me9kdpDgXKqtVYITJz9cHSBrM-63xCn0K9aPazw9LUycau-0Lhq7EFOdy_37dA",
+            "description": "Access token to use in Authorization header (don't forget to add Bearer in front)"
+          }
+        }
+      },
+      "ReservationList": {
+        "description": "List of Reservations",
+        "type": "object",
+        "properties": {
+          "reservations": {
             "type": "array",
-            "items":{
-              "$ref": "#/components/schemas/SingleTableSchema"
+            "items": {
+              "$ref": "#/components/schemas/Reservation"
             }
+          }
+        }
+      },
+      "Reservation": {
+        "description": "A simple Reservation object",
+        "type": "object",
+        "properties": {
+          "tableNumber": {
+            "type": "integer",
+            "example": 10,
+            "description": "Table number"
+          },
+          "clientName": {
+            "type": "string",
+            "example": "Jack Smith",
+            "description": "Client full name"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "+851765987",
+            "description": "Client phone number"
+          },
+          "date": {
+            "type": "string",
+            "example": "2024-12-31",
+            "description": "Date of reservation in yyyy-MM-dd format"
+          },
+          "slotTimeStart": {
+            "type": "string",
+            "example": "13:00",
+            "description": "Slot time start in HH:MM format"
+          },
+          "slotTimeEnd": {
+            "type": "string",
+            "example": "13:00",
+            "description": "Slot time end in HH:MM format"
+          }
+        }
+      },
+      "ReservationId": {
+        "description": "A simple Reservation id object",
+        "type": "object",
+        "properties": {
+          "reservationId": {
+            "type": "string",
+            "example": "f078600a-a19c-4a4d-b165-9815473910cb",
+            "description": "Reservation id"
           }
         }
       }
     },
     "securitySchemes": {
-      "cognito-authorizer": {
+      "authorizer": {
         "type": "apiKey",
         "name": "Authorization",
         "in": "header",
