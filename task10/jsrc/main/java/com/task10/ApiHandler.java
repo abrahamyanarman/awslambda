@@ -232,7 +232,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 	private APIGatewayProxyResponseEvent handleGetTables() {
 		logger.info("Start handleGetTables!");
-		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName("Tables"));
+		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName(tablesTable.getTableName()));
 		logger.info("HandleGetTables ScanResult: " + scanResult);
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
 		logger.info("HandleGetTables items: " + items);
@@ -314,7 +314,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private APIGatewayProxyResponseEvent handleGetReservations() {
 
-		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName("Reservations"));
+		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName(reservationsTable.getTableName()));
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
 
 		Map<String, List<Map<String, AttributeValue>>> responseBody = Map.of("reservations", items);
