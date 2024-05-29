@@ -36,6 +36,7 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.UserNotFoun
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolClientDescription;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserPoolDescriptionType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -232,14 +233,44 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	private boolean isValidSigninRequest(Map<String, String> requestBody) {
 		return requestBody.containsKey("email") && requestBody.containsKey("password");
 	}
+
+	private Map<String, Object> convertDynamoDBItemToMap(Map<String, AttributeValue> item) {
+		Map<String, Object> result = new HashMap<>();
+		for (Map.Entry<String, AttributeValue> entry : item.entrySet()) {
+			String key = entry.getKey();
+			AttributeValue value = entry.getValue();
+			if (value.getS() != null) {
+				result.put(key, value.getS());
+			} else if (value.getN() != null) {
+				result.put(key, Integer.parseInt(value.getN()));
+			} else if (value.getBOOL() != null) {
+				result.put(key, value.getBOOL());
+			} else if (value.getL() != null) {
+				List<Object> list = new ArrayList<>();
+				for (AttributeValue listItem : value.getL()) {
+					list.add(convertDynamoDBItemToMap(Map.of(key, listItem)).get(key));
+				}
+				result.put(key, list);
+			} else if (value.getM() != null) {
+				result.put(key, convertDynamoDBItemToMap(value.getM()));
+			}
+		}
+		return result;
+	}
+
 	private APIGatewayProxyResponseEvent handleGetTables() {
 		logger.info("Start handleGetTables!");
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName(tablesTable.getTableName()));
+		List<Map<String, Object>> tables = new ArrayList<>();
 		logger.info("HandleGetTables ScanResult: " + scanResult);
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
 		logger.info("HandleGetTables items: " + items);
 
-		Map<String, List<Map<String, AttributeValue>>> responseBody = Map.of("tables", items);
+		for (Map<String, AttributeValue> item : items) {
+			tables.add(convertDynamoDBItemToMap(item));
+		}
+
+		Map<String, Object> responseBody = Map.of("tables", tables);
 		logger.info("HandleGetTables responseBody: " + responseBody);
 		logger.info("HandleGetTables responseBody with serialize: " + serialize(responseBody));
 		logger.info("End handleGetTables!");
@@ -356,11 +387,16 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		logger.info("Start handleGetReservations!");
 
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName(reservationsTable.getTableName()));
+		List<Map<String, Object>> reservations = new ArrayList<>();
 		logger.info("HandleGetReservations ScanResult: " + scanResult);
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
 		logger.info("HandleGetReservations items: " + items);
 
-		Map<String, List<Map<String, AttributeValue>>> responseBody = Map.of("reservations", items);
+		for (Map<String, AttributeValue> item : items) {
+			reservations.add(convertDynamoDBItemToMap(item));
+		}
+
+		Map<String, Object> responseBody = Map.of("reservations", reservations);
 		logger.info("HandleGetReservations responseBody: " + responseBody);
 		logger.info("End handleGetReservations!");
 		return createSuccessResponse(serialize(responseBody));
