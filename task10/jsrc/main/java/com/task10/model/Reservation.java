@@ -1,7 +1,7 @@
 package com.task10.model;
 
 public class Reservation {
-    private String reservationId;
+    private String id;
     private int tableNumber;
     private String clientName;
     private String phoneNumber;
@@ -9,12 +9,12 @@ public class Reservation {
     private String slotTimeStart;
     private String slotTimeEnd;
 
-    public String getReservationId() {
-        return reservationId;
+    public String getId() {
+        return id;
     }
 
-    public void setReservationId(String reservationId) {
-        this.reservationId = reservationId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public int getTableNumber() {

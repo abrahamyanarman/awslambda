@@ -18,7 +18,6 @@ import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 import com.syndicate.deployment.model.RetentionSetting;
 import com.task10.model.Reservation;
 import com.task10.model.Tables;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminCreateUserRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthRequest;
@@ -232,11 +231,15 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		return requestBody.containsKey("email") && requestBody.containsKey("password");
 	}
 	private APIGatewayProxyResponseEvent handleGetTables() {
-
+		logger.info("Start handleGetTables!");
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName("Tables"));
+		logger.info("HandleGetTables ScanResult: " + scanResult);
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
+		logger.info("HandleGetTables items: " + items);
 
 		Map<String, List<Map<String, AttributeValue>>> responseBody = Map.of("tables", items);
+		logger.info("HandleGetTables responseBody: " + responseBody);
+		logger.info("End handleGetTables!");
 		return createSuccessResponse(serialize(responseBody));
 	}
 
@@ -287,9 +290,9 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			return createErrorResponse(400, "Invalid request");
 		}
 
-		reservation.setReservationId(UUID.randomUUID().toString());
+		reservation.setId(UUID.randomUUID().toString());
 		reservationsTable.putItem(new Item()
-				.withPrimaryKey("reservationId", reservation.getReservationId())
+				.withPrimaryKey("id", reservation.getId())
 				.withNumber("tableNumber", reservation.getTableNumber())
 				.withString("clientName", reservation.getClientName())
 				.withString("phoneNumber", reservation.getPhoneNumber())
@@ -297,7 +300,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				.withString("slotTimeStart", reservation.getSlotTimeStart())
 				.withString("slotTimeEnd", reservation.getSlotTimeEnd()));
 
-		Map<String, String> responseBody = Map.of("reservationId", reservation.getReservationId());
+		Map<String, String> responseBody = Map.of("reservationId", reservation.getId());
 		return createSuccessResponse(serialize(responseBody));
 	}
 	private boolean isValidReservation(Reservation reservation) {
