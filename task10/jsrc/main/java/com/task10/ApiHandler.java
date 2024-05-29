@@ -77,7 +77,6 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		String httpMethod = event.getHttpMethod();
 		String path = event.getPath();
 		String body = event.getBody();
-		Map<String, String> headers = event.getHeaders();
 		APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
 		response.setHeaders(Collections.singletonMap("Content-Type", "application/json"));
 
@@ -90,14 +89,14 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 			} else if (TABLES_PATH.equals(path) && GET.equalsIgnoreCase(httpMethod)) {
 				return handleGetTables();
 			} else if (TABLES_PATH.equals(path) && POST.equalsIgnoreCase(httpMethod)) {
-				return handleCreateTable(headers, body);
+				return handleCreateTable(body);
 			} else if (path.startsWith(START_WITH_TABLES_PATH) && GET.equalsIgnoreCase(httpMethod)) {
 				int tableId = Integer.parseInt(path.split("/")[2]);
-				return handleGetTable(headers, tableId);
+				return handleGetTable(tableId);
 			} else if (RESERVATIONS_PATH.equals(path) && POST.equalsIgnoreCase(httpMethod)) {
-				return handleCreateReservation(headers, body);
+				return handleCreateReservation(body);
 			} else if (RESERVATIONS_PATH.equals(path) && GET.equalsIgnoreCase(httpMethod)) {
-				return handleGetReservations(headers);
+				return handleGetReservations();
 			} else {
 				response.setStatusCode(400);
 				response.setBody("{\"message\":\"Bad Request\"}");
@@ -241,7 +240,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		return createSuccessResponse(serialize(responseBody));
 	}
 
-	private APIGatewayProxyResponseEvent handleCreateTable(Map<String, String> headers, String body) throws Exception {
+	private APIGatewayProxyResponseEvent handleCreateTable(String body) throws Exception {
+		logger.info("Start create table with body: " + body);
 
 		Tables table = objectMapper.readValue(body, Tables.class);
 		if (!isValidTable(table)) {
@@ -262,7 +262,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		return table.getId() != 0 && table.getNumber() != 0 && table.getPlaces() != 0;
 	}
 
-	private APIGatewayProxyResponseEvent handleGetTable(Map<String, String> headers, int tableId) {
+	private APIGatewayProxyResponseEvent handleGetTable(int tableId) {
 
 		GetItemSpec spec = new GetItemSpec().withPrimaryKey("id", tableId);
 		Item item = tablesTable.getItem(spec);
@@ -280,7 +280,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 		return createSuccessResponse(serialize(table));
 	}
 
-	private APIGatewayProxyResponseEvent handleCreateReservation(Map<String, String> headers, String body) throws Exception {
+	private APIGatewayProxyResponseEvent handleCreateReservation(String body) throws Exception {
 
 		Reservation reservation = objectMapper.readValue(body, Reservation.class);
 		if (!isValidReservation(reservation)) {
@@ -309,7 +309,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				reservation.getSlotTimeEnd() != null;
 	}
 
-	private APIGatewayProxyResponseEvent handleGetReservations(Map<String, String> headers) {
+	private APIGatewayProxyResponseEvent handleGetReservations() {
 
 		ScanResult scanResult = dynamoDBClient.scan(new ScanRequest().withTableName("Reservations"));
 		List<Map<String, AttributeValue>> items = scanResult.getItems();
