@@ -161,7 +161,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 	}
 
 	private boolean isValidPassword(String password) {
-		String passwordRegex = "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[$%^*]).{12,}$";
+		String passwordRegex = "^[\\w$%^*-_.]+$";
 		Pattern pattern = Pattern.compile(passwordRegex);
 		Matcher matcher = pattern.matcher(password);
 		return matcher.matches();
