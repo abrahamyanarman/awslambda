@@ -23,6 +23,8 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminCreateUserRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthRequest;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthResponse;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminSetUserPasswordRequest;
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminSetUserPasswordResponse;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeType;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthFlowType;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.ListUserPoolClientsRequest;
@@ -139,9 +141,18 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 				.temporaryPassword(requestBody.get("password"))
 				.messageAction("SUPPRESS")
 				.build();
+		cognitoClient.adminCreateUser(createUserRequest);
+		AdminSetUserPasswordRequest adminSetUserPasswordRequest = AdminSetUserPasswordRequest.builder()
+						.userPoolId(userPoolId)
+								.username(requestBody.get("email"))
+										.password(requestBody.get("password"))
+												.permanent(true)
+														.build();
+		logger.info("AdminSetUserPasswordRequest: " + adminSetUserPasswordRequest);
+		AdminSetUserPasswordResponse adminSetUserPasswordResponse = cognitoClient.adminSetUserPassword(adminSetUserPasswordRequest);
+		logger.info("AdminSetUserPasswordResponse: " + adminSetUserPasswordResponse);
 
 		logger.info("Calling adminCreateUser: " + createUserRequest);
-		cognitoClient.adminCreateUser(createUserRequest);
 
 		return createSuccessResponse("{\"message\":\"Sign-up successful\"}");
 	}
@@ -206,6 +217,7 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 		logger.info("Calling adminInitiateAuth: " + authRequest);
 		AdminInitiateAuthResponse authResult = cognitoClient.adminInitiateAuth(authRequest);
+		logger.info("AdminInitiateAuthResponse: " + authResult);
 		String idToken = authResult.authenticationResult().idToken();
 
 		Map<String, String> responseBody = Map.of("accessToken", idToken);
