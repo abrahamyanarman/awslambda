@@ -68,8 +68,8 @@ public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, A
 
 	private final AmazonDynamoDB dynamoDBClient = AmazonDynamoDBClientBuilder.defaultClient();
 	private final DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
-	private final Table tablesTable = dynamoDB.getTable("Tables");
-	private final Table reservationsTable = dynamoDB.getTable("Reservations");
+	private final Table tablesTable = dynamoDB.getTable("cmtr-a7a5b08f-Tables-test");
+	private final Table reservationsTable = dynamoDB.getTable("cmtr-a7a5b08f-Reservations-test");
 	private final CognitoIdentityProviderClient cognitoClient = CognitoIdentityProviderClient.create();
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
